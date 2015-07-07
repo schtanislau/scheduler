@@ -96,22 +96,23 @@ class CrossOptionsConnector extends Connector {
 			$filters->add($this->master_name, $this->master_value, "=");
 	}
 
-	// TODO: We need to understand the behavior of this shit
 	public function afterProcessing($action){
 		$status = $action->get_status();
-		
+
 		$master_key = $action->get_id();//value($this->master_name);	
 		$link_key = $action->get_value($this->link_name);
 		$link_key = explode(',', $link_key);
-		
+
 		if ($status == "inserted")
 			$master_key = $action->get_new_id();
-			
+
 		switch ($status){
 			case "updated":
 				//cross link options not loaded yet, so we can skip update
 				if (!array_key_exists($this->link_name, $action->get_data()))
 					break;
+				//else, delete old options and continue in insert section to add new values
+				$this->link->delete([$this->master_name => $master_key]);
 			case "inserted":
 				for ($i=0; $i < sizeof($link_key); $i++)
 					if ($link_key[$i]!="")
@@ -127,8 +128,6 @@ class CrossOptionsConnector extends Connector {
 		$status = $action->get_status();
 
 		$master_key = $action->get_id();//value($this->master_name);
-		$link_key = $action->get_value($this->link_name);
-		$link_key = explode(',', $link_key);
 
 		if ($status == "inserted")
 			$master_key = $action->get_new_id();
@@ -137,16 +136,8 @@ class CrossOptionsConnector extends Connector {
 			case "deleted":
 				$this->link->delete([$this->master_name => $master_key]);
 				break;
-			case "updated":
-				//cross link options not loaded yet, so we can skip update
-				if (!array_key_exists($this->link_name, $action->get_data()))
-					break;
-				//else, delete old options and continue in insert section to add new values
-				$this->link->delete([$this->master_name => $master_key]);
-				break;
 		}
 	}
-
 }
 
 
